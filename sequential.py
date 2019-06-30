@@ -135,7 +135,7 @@ class Sequential:
   def output(self, input):
     return self.feed_forward(input)
 
-  def train(self, inputs, targets, epochs):
+  def train(self, inputs, targets, epochs, debug=False):
     def finish_training(layers):
       for l in layers:
         l.lto = l.o
@@ -145,9 +145,10 @@ class Sequential:
       A = targets
       self.propagate_back(np.array(targets))
       B = self.feed_forward(inputs)
-      if (i%100) == 0:
+      if debug and (i%100) == 0:
         print ("Epoch: {i}, Loss: {loss}".format(i=i, loss = self.loss(A, B)))
     finish_training(self.layers)
+    return self.loss(A, B)
 
   def update_layer_weights(self, layer, sigma, eta):
     d_weights = np.dot(layer.i.T, sigma) * eta
