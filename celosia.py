@@ -2,7 +2,6 @@
 from functions import sigmoid
 from estimators import mse
 from sequential import Sequential
-import numpy as np
 from random import randint
 from utilities import save_object, load_object
 import math
@@ -37,18 +36,19 @@ def create_network_sigmoid(i, o, lh, eta=0.5):
   nn.add_layer(o, sigmoid, 0.0, w)
   return nn
 
-def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000):
+def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000, mh=5):
   '''create an optimal network by trying different structures.
      Parameters: i,o = number of neurons in [input|output] layers.
                  n = number of different structures to try.
                  inputs, outputs = input and output vectors.
-                 epochs, number of epochs to try for each structure, default = 10000'''
+                 epochs = number of epochs to try for each structure, default = 10000.
+                 mh = maximum number of hidden layers, default = 5.'''
   nh = max_nh(i, o, inputs.shape[0])
   lnn = [] # list of neural networks
   le = []  # list of errors
   for j in range(n):
     lh = [] # list of the number of neurons in a hidden layer
-    nh = randint(1, 5)
+    nh = randint(1, mh)
     for k in range(nh):
       lh.append(randint(1, nh))
     nn = create_network_sigmoid(i, o, lh)
@@ -61,54 +61,3 @@ def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000):
   mi = le.index(min(le)) # minimum
   print mi
   lnn[mi].draw(inputs, outputs, file="most-optimal", cleanup=True)
-
-# A 3-input XOR Gate
-inputs = np.array([
-                  [0,0,0],
-                  [0,0,1],
-                  [0,1,0],
-                  [0,1,1],
-                  [1,0,0],
-                  [1,0,1],
-                  [1,1,0],
-                  [1,1,1],
-                  ])
-outputs = np.array([
-                   [0],
-                   [1],
-                   [1],
-                   [0],
-                   [1],
-                   [0],
-                   [0],
-                   [1],
-                   ])
-inputs_train = np.array([
-                  [0,0,0],
-                  [0,0,1],
-                  [0,1,0],
-                  [1,0,1],
-                  [1,1,0],
-                  [1,1,1],
-                  ])
-
-inputs_test = np.array([
-                  [0,1,1],
-                  [1,0,0],
-                  ])
-
-outputs_train = np.array([
-                         [0],
-                         [1],
-                         [1],
-                         [0],
-                         [0],
-                         [1],
-                         ])
-
-outputs_test = np.array([
-                        [0],
-                        [1],
-                        ])
-
-create_optimal_network(3, 1, 10, inputs, outputs)
