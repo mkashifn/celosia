@@ -48,16 +48,17 @@ def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000, mh=5):
   le = []  # list of errors
   for j in range(n):
     lh = [] # list of the number of neurons in a hidden layer
-    nh = randint(1, mh)
-    for k in range(nh):
+    h = randint(1, mh)
+    for k in range(h):
       lh.append(randint(1, nh))
     nn = create_network_sigmoid(i, o, lh)
     lnn.append(nn)
     e = nn.train(inputs, outputs, epochs)
     le.append(e)
-    print ("try-{}: error: {}".format(j, e))
+    print ("iteration-{}: error: {}".format(j+1, e))
     nn.draw(inputs, outputs, file="iteration-{}".format(j+1), cleanup=True)
   print le
   mi = le.index(min(le)) # minimum
-  print mi
+  print ("Minimum error index: {}".format(mi))
   lnn[mi].draw(inputs, outputs, file="most-optimal", cleanup=True)
+  return lnn[mi]
