@@ -36,21 +36,22 @@ def create_network_sigmoid(i, o, lh, eta=0.5):
   nn.add_layer(o, sigmoid, 0.0, w)
   return nn
 
-def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000, mh=5):
+def create_optimal_network(i, o, n, inputs, outputs, epochs = 10000, hmax=5, nmax=5):
   '''create an optimal network by trying different structures.
      Parameters: i,o = number of neurons in [input|output] layers.
                  n = number of different structures to try.
                  inputs, outputs = input and output vectors.
                  epochs = number of epochs to try for each structure, default = 10000.
-                 mh = maximum number of hidden layers, default = 5.'''
-  nh = max_nh(i, o, inputs.shape[0])
+                 hmax = maximum number of hidden layers, default = 5.
+                 hmax = maximum number of neurons in a hidden layer, default = 5.'''
+  #nmax = max_nh(i, o, inputs.shape[0])
   lnn = [] # list of neural networks
   le = []  # list of errors
   for j in range(n):
     lh = [] # list of the number of neurons in a hidden layer
-    h = randint(1, mh)
+    h = randint(1, hmax)
     for k in range(h):
-      lh.append(randint(1, nh))
+      lh.append(randint(1, nmax))
     nn = create_network_sigmoid(i, o, lh)
     lnn.append(nn)
     e = nn.train(inputs, outputs, epochs)
