@@ -23,7 +23,7 @@ The output PDF files will be located under `draw` directory as follows:
 
 File Name     | Description
 --- | --- |
-`iteration-i.pdf` | Contains the network strcuture in the `ith` iteration
+`structure-i.pdf` | Contains the network structure in the `ith` iteration
 `most-optimal.pdf` | Contains the most optimal network structure
 
 #### Environement

@@ -28,7 +28,5 @@ outputs = np.array([
                    [1],
                    ])
 
-i = inputs.shape[1] # number of colums in the input
-o = outputs.shape[1] # number of colums in the output
-n = 10 # number of different network structures to try
-celosia.create_optimal_network(i, o, n, inputs, outputs)
+N = 10 # number of different network structures to try
+celosia.create_optimal_network(inputs, outputs, N)
