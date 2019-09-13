@@ -1,5 +1,5 @@
 import numpy as np
-import celosia
+from celosia import Celosia
 
 #*************************************************************************
 # An illustration example as presented in the following paper:
@@ -29,4 +29,5 @@ outputs = np.array([
                    ])
 
 N = 10 # number of different network structures to try
+celosia = Celosia()
 celosia.create_optimal_network(inputs, outputs, N)
