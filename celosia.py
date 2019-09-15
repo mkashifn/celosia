@@ -7,6 +7,24 @@ from utilities import save_object, load_object
 import math
 from sklearn.model_selection import train_test_split
 import time
+from multiprocessing import Process, Queue
+
+def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, q):
+  e_tr = nn.train(X_train, y_train, epochs)
+  e_tst = mse(y_test, nn.output(X_test))
+  res = {nn.name:e_tr}
+  if mp: # multiprocessing is used, put in queue
+    q.put(res)
+  else: # multiprocessing is NOT used, update the dictionary
+    q.update(res)
+  print ("{}: training error: {}, test_error: {}".format(nn.name, e_tr, e_tst))
+
+def get_nn_by_name(name, lnn):
+  # get a neural network from a list of neural networks by name
+  for nn in lnn:
+    if nn.name == name:
+      return nn
+  return None
 
 class Celosia:
   def __init__(self):
@@ -22,18 +40,19 @@ class Celosia:
     nh = math.ceil(ns/(alpha * (ni + no)))
     return nh
 
-  def create_network_sigmoid(self, i, o, lh, eta=0.5):
+  def create_network_sigmoid(self, name, i, o, lh, eta=0.5):
     '''Create a neural network by making use of sigmoid activation function in all layers.
-       Parameters: i,o =  number of neurons in [input|output] layers.
-                   lh = list containing the number of neurons in each hidden layer.
-                   eta = learning rate, 0.5 by default.'''
+       Parameters:  name = name of the nn (any arbitrary string)
+                    i,o =  number of neurons in [input|output] layers.
+                    lh = list containing the number of neurons in each hidden layer.
+                    eta = learning rate, 0.5 by default.'''
     assert type(i) is int, "parameter i (number of input neurons) needs to be an integer"
     assert type(o) is int, "parameter o (number of output neurons) needs to be an integer"
     assert type(lh) is list, "parameter h (list of neurons in each hidden layer) needs to be a list"
     assert len(lh) >= 1, "there needs to be at least one hidden layer"
 
     w = None # None means randomly initialize weights
-    nn = Sequential(mse, eta)
+    nn = Sequential(name, mse, eta)
     # input layer
     nn.add_layer(lh[0], sigmoid, 0.0, w, i)
     # hidden layers
@@ -51,7 +70,8 @@ class Celosia:
                       epochs = number of epochs to try for each structure, default = 10000.
                       hmax = maximum number of hidden layers, default = 5.
                       nmax = maximum number of neurons in a hidden layer, default = 5.
-                      view = view output (PDF), default = False.'''
+                      view = view output (PDF), default = False.
+                      mp = use mullti-processing, default = True'''
     # Load configuration
     start_time = time.time()
     N = config.get('N', 10)
@@ -59,11 +79,17 @@ class Celosia:
     hmax = config.get('hmax', 5)
     nmax = config.get('nmax', 5)
     view = config.get('view', False)
+    mp = config.get('mp', True)
     
     
     #nmax = max_nh(i, o, inputs.shape[0])
     lnn = [] # list of neural networks
-    le = []  # list of errors
+
+    le = {} # dictionary of errors
+    if mp:
+      q = Queue()
+      lp = [] # list of processes
+
     i = inputs.shape[1] # number of colums in the input
     o = outputs.shape[1] # number of colums in the output
     X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=42)
@@ -72,17 +98,27 @@ class Celosia:
       h = randint(1, hmax)
       for k in range(h):
         lh.append(randint(1, nmax))
-      nn = self.create_network_sigmoid(i, o, lh)
+      name = "structure-{}".format(j+1)
+      nn = self.create_network_sigmoid(name, i, o, lh)
       lnn.append(nn)
-      e_tr = nn.train(X_train, y_train, epochs)
-      e_tst = mse(y_test, nn.output(X_test))
-      le.append(e_tr)
-      print ("structure-{}: training error: {}, test_error: {}".format(j+1, e_tr, e_tst))
-      nn.draw(inputs, outputs, file="structure-{}".format(j+1), view=view, cleanup=True)
-    print le
-    mi = le.index(min(le)) # minimum
-    print ("Minimum error index: {}".format(mi))
-    lnn[mi].draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
+      nn.draw(inputs, outputs, file="{}".format(nn.name), view=view, cleanup=True)
+    for nn in lnn:
+      if mp:
+        p = Process(target=evaluate_nn, args=(nn, epochs, X_train, X_test, y_train, y_test, mp, q))
+        lp.append(p)
+        p.start()
+      else:
+        evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, le)
+    if mp:
+      for p in lp:
+        p.join()
+      while not q.empty():
+        le.update(q.get())
+    print ("LE: {}".format(le))
+    opt_nn_name = min(le, key=le.get) # optimum neural network
+    opt_nn = get_nn_by_name(opt_nn_name, lnn)
+    print ("Winning NN: {}, error: {}".format(opt_nn_name, le[opt_nn_name]))
+    opt_nn.draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
     elapsed_time = time.time() - start_time
-    print ("jobe completed in {} seconds.".format(elapsed_time))
-    return lnn[mi]
+    print ("job completed in {} seconds.".format(elapsed_time))
+    return opt_nn

@@ -18,7 +18,8 @@ class Layer:
     return self.o
 
 class Sequential:
-  def __init__(self, loss, eta):
+  def __init__(self, name, loss, eta):
+    self.name = name
     self.layers = []
     self.loss = loss
     self.eta = eta # learning rate

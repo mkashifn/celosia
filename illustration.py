@@ -1,5 +1,6 @@
 import numpy as np
 from celosia import Celosia
+from multiprocessing import freeze_support
 
 #*************************************************************************
 # An illustration example as presented in the following paper:
@@ -30,13 +31,14 @@ def create_xor_np_array(n):
   return (inputs, outputs)
 
 
-(inputs, outputs) = create_xor_np_array(8)
+if __name__ == '__main__':
+  freeze_support()
+  (inputs, outputs) = create_xor_np_array(8)
+  config = {
+    'N':10, # number of different network structures to try
+    #'view': True, # view the PDF file
+  }
+  celosia = Celosia()
+  celosia.create_optimal_network(inputs, outputs, config)
 
-config = {
-  'N':10, # number of different network structures to try
-  #'view': True, # view the PDF file
-}
-celosia = Celosia()
-celosia.create_optimal_network(inputs, outputs, config)
-
-# https://github.com/alexarnimueller/som/blob/master/som.py
+  # https://github.com/alexarnimueller/som/blob/master/som.py
