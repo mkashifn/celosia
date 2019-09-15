@@ -5,10 +5,13 @@ from sequential import Sequential
 from random import randint
 from utilities import save_object, load_object
 import math
+from sklearn.model_selection import train_test_split
+
 
 class Celosia:
   def __init__(self):
-    pass
+    self.rules = {}
+    self.active_models = []
 
   def max_nh(self, ni, no, ns):
     '''a rule-of-thumb for the upper bound of the number of neurons in hidden layers:
@@ -52,6 +55,7 @@ class Celosia:
     le = []  # list of errors
     i = inputs.shape[1] # number of colums in the input
     o = outputs.shape[1] # number of colums in the output
+    X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=42)
     for j in range(N):
       lh = [] # list of the number of neurons in a hidden layer
       h = randint(1, hmax)
@@ -59,9 +63,10 @@ class Celosia:
         lh.append(randint(1, nmax))
       nn = self.create_network_sigmoid(i, o, lh)
       lnn.append(nn)
-      e = nn.train(inputs, outputs, epochs)
-      le.append(e)
-      print ("structure-{}: error: {}".format(j+1, e))
+      e_tr = nn.train(X_train, y_train, epochs)
+      e_tst = mse(y_test, nn.output(X_test))
+      le.append(e_tr)
+      print ("structure-{}: training error: {}, test_error: {}".format(j+1, e_tr, e_tst))
       nn.draw(inputs, outputs, file="structure-{}".format(j+1), cleanup=True)
     print le
     mi = le.index(min(le)) # minimum

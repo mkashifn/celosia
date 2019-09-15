@@ -141,8 +141,8 @@ class Sequential:
         l.lto = l.o
 
     self.feed_forward(inputs)
+    A = targets
     for i in range(epochs):
-      A = targets
       self.propagate_back(np.array(targets))
       B = self.feed_forward(inputs)
       if debug and (i%100) == 0:
