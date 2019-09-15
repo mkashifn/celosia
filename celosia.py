@@ -6,7 +6,7 @@ from random import randint
 from utilities import save_object, load_object
 import math
 from sklearn.model_selection import train_test_split
-
+import time
 
 class Celosia:
   def __init__(self):
@@ -43,13 +43,24 @@ class Celosia:
     nn.add_layer(o, sigmoid, 0.0, w)
     return nn
 
-  def create_optimal_network(self, inputs, outputs, N, epochs = 10000, hmax=5, nmax=5):
+  def create_optimal_network(self, inputs, outputs, config={}):
     '''create an optimal network by trying different structures.
-       Parameters: inputs, outputs = input and output vectors.
-                   N = number of different structures to try.
-                   epochs = number of epochs to try for each structure, default = 10000.
-                   hmax = maximum number of hidden layers, default = 5.
-                   hmax = maximum number of neurons in a hidden layer, default = 5.'''
+       Parameters:  inputs, outputs = input and output vectors.
+                    config = the configuration parameters (dict) as follows (empty by default):
+                      N = number of different structures to try, default = 10.
+                      epochs = number of epochs to try for each structure, default = 10000.
+                      hmax = maximum number of hidden layers, default = 5.
+                      nmax = maximum number of neurons in a hidden layer, default = 5.
+                      view = view output (PDF), default = False.'''
+    # Load configuration
+    start_time = time.time()
+    N = config.get('N', 10)
+    epochs = config.get('epochs', 10000)
+    hmax = config.get('hmax', 5)
+    nmax = config.get('nmax', 5)
+    view = config.get('view', False)
+    
+    
     #nmax = max_nh(i, o, inputs.shape[0])
     lnn = [] # list of neural networks
     le = []  # list of errors
@@ -67,9 +78,11 @@ class Celosia:
       e_tst = mse(y_test, nn.output(X_test))
       le.append(e_tr)
       print ("structure-{}: training error: {}, test_error: {}".format(j+1, e_tr, e_tst))
-      nn.draw(inputs, outputs, file="structure-{}".format(j+1), cleanup=True)
+      nn.draw(inputs, outputs, file="structure-{}".format(j+1), view=view, cleanup=True)
     print le
     mi = le.index(min(le)) # minimum
     print ("Minimum error index: {}".format(mi))
-    lnn[mi].draw(inputs, outputs, file="most-optimal", cleanup=True)
+    lnn[mi].draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
+    elapsed_time = time.time() - start_time
+    print ("jobe completed in {} seconds.".format(elapsed_time))
     return lnn[mi]

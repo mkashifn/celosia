@@ -32,8 +32,11 @@ def create_xor_np_array(n):
 
 (inputs, outputs) = create_xor_np_array(8)
 
-N = 10 # number of different network structures to try
+config = {
+  'N':10, # number of different network structures to try
+  #'view': True, # view the PDF file
+}
 celosia = Celosia()
-celosia.create_optimal_network(inputs, outputs, N)
+celosia.create_optimal_network(inputs, outputs, config)
 
 # https://github.com/alexarnimueller/som/blob/master/som.py
