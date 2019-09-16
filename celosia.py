@@ -10,14 +10,15 @@ import time
 from multiprocessing import Process, Queue
 
 def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, q):
-  e_tr = nn.train(X_train, y_train, epochs)
-  e_tst = mse(y_test, nn.output(X_test))
-  res = {nn.name:e_tr}
+  e_tr = nn.train(X_train, y_train, epochs) # training loss
+  e_tst = mse(y_test, nn.output(X_test)) # test loss
+  e_ratio = e_tst / e_tr
+  res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio}}
   if mp: # multiprocessing is used, put in queue
     q.put(res)
   else: # multiprocessing is NOT used, update the dictionary
     q.update(res)
-  print ("{}: training error: {}, test_error: {}".format(nn.name, e_tr, e_tst))
+  print ("{} -> Loss: training = {}, test = {}, ratio = {}".format(nn.name, e_tr, e_tst, e_ratio))
 
 def get_nn_by_name(name, lnn):
   # get a neural network from a list of neural networks by name
@@ -62,6 +63,16 @@ class Celosia:
     nn.add_layer(o, sigmoid, 0.0, w)
     return nn
 
+  def get_best_performing_nn(self, lnn, performance):
+    '''Get the best performing NN.
+       Parameters:  lnn = list of neural networks.
+                    performance = dictionary of network performance.'''
+    print ("Performance: {}".format(performance))
+    opt_nn_name = min(performance, key=lambda k: performance[k]['tl']) # optimum neural network
+    opt_nn = get_nn_by_name(opt_nn_name, lnn)
+    print ("Winning NN: {}, error: {}".format(opt_nn_name, performance[opt_nn_name]['tl']))
+    return opt_nn
+
   def create_optimal_network(self, inputs, outputs, config={}):
     '''create an optimal network by trying different structures.
        Parameters:  inputs, outputs = input and output vectors.
@@ -85,7 +96,7 @@ class Celosia:
     #nmax = max_nh(i, o, inputs.shape[0])
     lnn = [] # list of neural networks
 
-    le = {} # dictionary of errors
+    performance = {} # dictionary containing performance metrics for a NN
     if mp:
       q = Queue()
       lp = [] # list of processes
@@ -108,17 +119,13 @@ class Celosia:
         lp.append(p)
         p.start()
       else:
-        evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, le)
+        evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, performance)
     if mp:
       for p in lp:
         p.join()
       while not q.empty():
-        le.update(q.get())
-    print ("LE: {}".format(le))
-    opt_nn_name = min(le, key=le.get) # optimum neural network
-    opt_nn = get_nn_by_name(opt_nn_name, lnn)
-    print ("Winning NN: {}, error: {}".format(opt_nn_name, le[opt_nn_name]))
+        performance.update(q.get())
+    opt_nn = self.get_best_performing_nn(lnn, performance)
     opt_nn.draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
-    return opt_nn
