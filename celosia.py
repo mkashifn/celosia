@@ -10,15 +10,19 @@ import time
 from multiprocessing import Process, Queue
 
 def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, q):
-  e_tr = nn.train(X_train, y_train, epochs) # training loss
-  e_tst = mse(y_test, nn.output(X_test)) # test loss
-  e_ratio = e_tst / e_tr
+  e_ratio = 0
+  total_epochs = 0
+  while (e_ratio < 1.0) and (total_epochs < (10 * epochs)):
+    total_epochs += epochs
+    e_tr = nn.train(X_train, y_train, epochs) # training loss
+    e_tst = mse(y_test, nn.output(X_test)) # test loss
+    e_ratio = e_tst / e_tr
   res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio}}
   if mp: # multiprocessing is used, put in queue
     q.put(res)
   else: # multiprocessing is NOT used, update the dictionary
     q.update(res)
-  print ("{} -> Loss: training = {}, test = {}, ratio = {}".format(nn.name, e_tr, e_tst, e_ratio))
+  print ("{} -> Loss: training = {}, test = {}, ratio = {}, epochs = {}".format(nn.name, e_tr, e_tst, e_ratio, total_epochs))
 
 def get_nn_by_name(name, lnn):
   # get a neural network from a list of neural networks by name
@@ -68,7 +72,7 @@ class Celosia:
        Parameters:  lnn = list of neural networks.
                     performance = dictionary of network performance.'''
     print ("Performance: {}".format(performance))
-    opt_nn_name = min(performance, key=lambda k: performance[k]['tl']) # optimum neural network
+    opt_nn_name = min(performance, key=lambda k: performance[k]['vl']) # optimum neural network
     opt_nn = get_nn_by_name(opt_nn_name, lnn)
     print ("Winning NN: {}, error: {}".format(opt_nn_name, performance[opt_nn_name]['tl']))
     return opt_nn
