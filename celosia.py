@@ -9,20 +9,25 @@ from sklearn.model_selection import train_test_split
 import time
 from multiprocessing import Process, Queue
 
-def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, mp, q):
+def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   e_ratio = 0
+  suitable = False
+  e_tst = 1000000
   total_epochs = 0
-  while (e_ratio < 1.0) and (total_epochs < (10 * epochs)):
+  while ((e_tst > ed) or (e_ratio < 1.0)) and (total_epochs < (imax * epochs)):
     total_epochs += epochs
     e_tr = nn.train(X_train, y_train, epochs) # training loss
     e_tst = mse(y_test, nn.output(X_test)) # test loss
     e_ratio = e_tst / e_tr
-  res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio}}
+  if (e_ratio >= 1.0) and (e_tst <= ed):
+    suitable = True
+  res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio, 'suitable': suitable}}
   if mp: # multiprocessing is used, put in queue
     q.put(res)
   else: # multiprocessing is NOT used, update the dictionary
     q.update(res)
-  print ("{} -> Loss: training = {}, test = {}, ratio = {}, epochs = {}".format(nn.name, e_tr, e_tst, e_ratio, total_epochs))
+  #print ("{} -> Loss: training = {}, test = {}, ratio = {}, epochs = {}, suitable = {}".format(nn.name, e_tr, e_tst, e_ratio, total_epochs, suitable))
+  print (res)
 
 def get_nn_by_name(name, lnn):
   # get a neural network from a list of neural networks by name
@@ -71,10 +76,11 @@ class Celosia:
     '''Get the best performing NN.
        Parameters:  lnn = list of neural networks.
                     performance = dictionary of network performance.'''
-    print ("Performance: {}".format(performance))
-    opt_nn_name = min(performance, key=lambda k: performance[k]['vl']) # optimum neural network
+    #print ("Performance: {}".format(performance))
+    p = performance
+    opt_nn_name = min(p, key=lambda k: p[k]['vl'] if p[k]['suitable'] else 1000000) # optimum neural network
     opt_nn = get_nn_by_name(opt_nn_name, lnn)
-    print ("Winning NN: {}, error: {}".format(opt_nn_name, performance[opt_nn_name]['tl']))
+    print ("Winning NN: {}, tl: {}, vl: {}".format(opt_nn_name, p[opt_nn_name]['tl'], p[opt_nn_name]['vl']))
     return opt_nn
 
   def create_optimal_network(self, inputs, outputs, config={}):
@@ -85,14 +91,18 @@ class Celosia:
                       epochs = number of epochs to try for each structure, default = 10000.
                       hmax = maximum number of hidden layers, default = 5.
                       nmax = maximum number of neurons in a hidden layer, default = 5.
+                      ed = desired validation loss, default = 0.3.
+                      imax = maximum number of iterations, default = 10.
                       view = view output (PDF), default = False.
-                      mp = use mullti-processing, default = True'''
+                      mp = use mullti-processing, default = True.'''
     # Load configuration
     start_time = time.time()
     N = config.get('N', 10)
     epochs = config.get('epochs', 10000)
     hmax = config.get('hmax', 5)
     nmax = config.get('nmax', 5)
+    ed = config.get('ed', 0.3)
+    imax = config.get('imax', 10)
     view = config.get('view', False)
     mp = config.get('mp', True)
     
@@ -119,7 +129,7 @@ class Celosia:
       nn.draw(inputs, outputs, file="{}".format(nn.name), view=view, cleanup=True)
     for nn in lnn:
       if mp:
-        p = Process(target=evaluate_nn, args=(nn, epochs, X_train, X_test, y_train, y_test, mp, q))
+        p = Process(target=evaluate_nn, args=(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q))
         lp.append(p)
         p.start()
       else:
