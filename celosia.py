@@ -7,7 +7,9 @@ from utilities import save_object, load_object
 import math
 from sklearn.model_selection import train_test_split
 import time
+from sklearn.preprocessing import MinMaxScaler
 from multiprocessing import Process, Queue
+from thirdparty.minisom import MiniSom
 
 def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   e_ratio = 0
@@ -143,3 +145,28 @@ class Celosia:
     opt_nn.draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
+
+  def label_data(self, data):
+    '''Label data into normal and anomalous classes using SOM.
+       data is required to be numpy array and it should contain
+       all columns as features and any manually labeled columns should be
+       removed before calling this function.'''
+    X = data
+    sc = MinMaxScaler(feature_range = (0, 1))
+    X = sc.fit_transform(X)
+
+    # a 20x20 map is used by default
+    map_x = 20
+    map_y = map_x
+
+    nb_features = X.shape[1] # number of features
+    som = MiniSom(x = map_x, y = map_y, input_len = nb_features, sigma = 1.0, learning_rate = 0.5)
+    som.random_weights_init(X)
+    som.train_random(data = X, num_iteration = 100)
+    dm = som.distance_map()
+    Y = []
+    for i, x in enumerate(X):
+      w = som.winner(x)
+      (x,y) = w
+      Y.append(dm[x][y])
+    return Y
