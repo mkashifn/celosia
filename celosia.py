@@ -146,27 +146,50 @@ class Celosia:
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
 
-  def label_data(self, data):
-    '''Label data into normal and anomalous classes using SOM.
-       data is required to be numpy array and it should contain
-       all columns as features and any manually labeled columns should be
-       removed before calling this function.'''
+  def get_mid(self, data, map_x = 20):
+    '''Get mean inter-neuron distance using SOM.
+       Parameters: data = a numpy array and it should contain
+                        all columns as features and any manually
+                        labeled columns should be removed before
+                        calling this function.
+                    map_x = square-grid size, default = 20'''
     X = data
     sc = MinMaxScaler(feature_range = (0, 1))
     X = sc.fit_transform(X)
 
-    # a 20x20 map is used by default
-    map_x = 20
-    map_y = map_x
+    map_y = map_x # square grid
 
     nb_features = X.shape[1] # number of features
     som = MiniSom(x = map_x, y = map_y, input_len = nb_features, sigma = 1.0, learning_rate = 0.5)
     som.random_weights_init(X)
     som.train_random(data = X, num_iteration = 100)
     dm = som.distance_map()
-    Y = []
+    mid = []
     for i, x in enumerate(X):
       w = som.winner(x)
       (x,y) = w
-      Y.append(dm[x][y])
-    return Y
+      mid.append(dm[x][y])
+    return mid
+
+  def label_data(self, mid, threshold = 0.02):
+    '''Label data (predict as normal or anomalous) based upon mean inter-neuron distance.
+       Parameters: mid = mean inter-neuron distance list obtained using get_mid()
+                   threshold = the threshold (default = 0.02) that is used to
+                               determine if normal = 1 (when mid <= threshold),
+                               or anomalous = 0 otherwise.'''
+    Y_pred = []
+    for m in mid:
+      normal = (1 if m <= threshold else 0)
+      Y_pred.append(normal)
+    return Y_pred
+
+  def get_accuracy(self, Y, Y_pred):
+    '''Return accuracy of the prediction as a percentage.
+       Parameters: Y = the expected or actual labels (1 = normal, 0 = anomalous)
+                   Y_pred = the predicted output obtained using label_data().'''
+    #assert len(Y) == len (Y_pred), "Y and Y_pred are of different dimensions"
+    total = len(Y_pred)
+    correct = 0
+    for i in range(len(Y_pred)):
+      correct += (1 if Y[i] == Y_pred[i] else 0)
+    return (correct * 100) / total
