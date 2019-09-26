@@ -16,7 +16,6 @@ def main(filename):
                   index_col=0)
   X = ds.iloc[:, :-1].values
   Y = ds.iloc[:, -1].values
-  print ds
   celosia = Celosia()
   mid = celosia.get_mid(X)
   Y_pred = celosia.label_data(mid, 0.02)
@@ -25,7 +24,10 @@ def main(filename):
   ds['SOM-mid'] = mid
   ds['Y_pred_0.02'] = Y_pred
   ds.to_csv(output_filename)
+  (th_v, acc_v) = celosia.compute_threshold_vs_accuracy(mid, Y)
+  print th_v
+  print acc_v
 
 if __name__ == '__main__':
   freeze_support()
-  main('data/SampleData.csv')
+  main('data/Danmini_Doorbell.csv')

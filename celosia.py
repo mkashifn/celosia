@@ -146,7 +146,7 @@ class Celosia:
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
 
-  def get_mid(self, data, map_x = 20):
+  def get_mid(self, data, map_x = 10):
     '''Get mean inter-neuron distance using SOM.
        Parameters: data = a numpy array and it should contain
                         all columns as features and any manually
@@ -162,7 +162,7 @@ class Celosia:
     nb_features = X.shape[1] # number of features
     som = MiniSom(x = map_x, y = map_y, input_len = nb_features, sigma = 1.0, learning_rate = 0.5)
     som.random_weights_init(X)
-    som.train_random(data = X, num_iteration = 100)
+    som.train_random(data = X, num_iteration = 2000)
     dm = som.distance_map()
     mid = []
     for i, x in enumerate(X):
@@ -193,3 +193,19 @@ class Celosia:
     for i in range(len(Y_pred)):
       correct += (1 if Y[i] == Y_pred[i] else 0)
     return (correct * 100) / total
+
+  def compute_threshold_vs_accuracy(self, mid, Y, step = 0.01):
+    '''Computes the threshold vs accuracy, for all thresholds between 0 and 1.
+       Parameters: mid = mean inter-neuron distance list obtained using get_mid()
+                   Y = the expected or actual labels (1 = normal, 0 = anomalous)
+                   step = the step to be taken from 0 to 1, default = 0.01'''
+    th_v = [] # threshold vectors
+    acc_v = [] # accuracy vector
+    threshold = 0
+    while threshold <= 1:
+      Y_pred = self.label_data(mid, threshold)
+      accuracy = self.get_accuracy(Y, Y_pred)
+      th_v.append(threshold)
+      acc_v.append(accuracy)
+      threshold += step
+    return (th_v, acc_v)
