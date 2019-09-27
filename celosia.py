@@ -3,7 +3,7 @@ from functions import sigmoid
 from estimators import mse
 from sequential import Sequential
 from random import randint
-from utilities import save_object, load_object
+from utilities import save_object, load_object, plot_marker
 import math
 from sklearn.model_selection import train_test_split
 import time
@@ -12,6 +12,7 @@ from multiprocessing import Process, Queue
 from thirdparty.minisom import MiniSom
 import numpy as np
 import pandas as pd
+from pylab import bone, pcolor, colorbar, plot, show
 
 def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   e_ratio = 0
@@ -171,7 +172,47 @@ class Celosia:
       w = som.winner(x)
       (x,y) = w
       mid.append(dm[x][y])
+
+    self.dm = dm
+    self.som = som
+    self.grid = (map_x, map_y)
     return mid
+
+  def plot_distance_map(self):
+    '''Plots distance map. Need to call get_mid before calling this.'''
+    bone()
+    pcolor(self.dm.T)
+    colorbar()
+    show()
+
+  def plot_distance_map_labels(self, X, Y):
+    '''Plots distance map with labels. Need to call get_mid before calling this.
+       Parameters: X = input features
+                   Y = labels, 1 = normal, 0 = anomalous.'''
+    red_set = set() # normal instances
+    green_set = set() # anomalous instances
+    for i, x in enumerate(X):
+        w = self.som.winner(x)
+        if int(Y[i]) == 0:
+            red_set.add(w)
+        else:
+            green_set.add(w)
+    bone()
+    pcolor(self.dm.T)
+    colorbar()
+    (map_x, map_y) = self.grid
+    for x in range(map_x):
+      for y in range(map_y):
+         xy = (x,y)
+         if (xy in red_set) and (xy in green_set):
+             plot_marker(xy, 'h', 'y')
+         elif xy in red_set:
+             plot_marker(xy, 'o', 'r')
+         elif xy in green_set:
+             plot_marker(xy, 's', 'g')
+         else:
+             pass #plot_marker(xy, 'v', 'b')
+    show()
 
   def label_data(self, mid, threshold = 0.02):
     '''Label data (predict as normal or anomalous) based upon mean inter-neuron distance.

@@ -15,6 +15,7 @@ Celosia depends upon the following packages:
   * multiprocessing
   * modlamp
   * pandas
+  * pylab
 
 ### Illustrating Example
 The following command can be used to run the illustration example as presented in the paper:
