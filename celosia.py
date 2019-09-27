@@ -149,7 +149,7 @@ class Celosia:
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
 
-  def get_mid(self, data, map_x = 10):
+  def get_mid(self, data, map_x = 20):
     '''Get mean inter-neuron distance using SOM.
        Parameters: data = a numpy array and it should contain
                         all columns as features and any manually
@@ -157,9 +157,6 @@ class Celosia:
                         calling this function.
                     map_x = square-grid size, default = 20'''
     X = data
-    sc = MinMaxScaler(feature_range = (0, 1))
-    X = sc.fit_transform(X)
-
     map_y = map_x # square grid
 
     nb_features = X.shape[1] # number of features
@@ -271,7 +268,7 @@ class Celosia:
     return (th_v, acc_v, fp_v, fn_v)
 
   def retrieve_labeled_data(self, source_list):
-    '''Retrieve labeled data from different sources.
+    '''Retrieve labeled data from different sources and scale the inputs in 0-1 range.
        Parameters: source_list = a list of data source dictionary with the following
                                  attributes:
                         filename = the name of the file
@@ -298,4 +295,8 @@ class Celosia:
       l_y.append(y)
     X = np.concatenate(tuple(l_x), axis=0)
     Y = np.concatenate(tuple(l_y), axis=0)
+
+    # scale the input in 0-1 range
+    sc = MinMaxScaler(feature_range = (0, 1))
+    X = sc.fit_transform(X)
     return (X, Y)
