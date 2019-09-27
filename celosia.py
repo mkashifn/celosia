@@ -10,6 +10,8 @@ import time
 from sklearn.preprocessing import MinMaxScaler
 from multiprocessing import Process, Queue
 from thirdparty.minisom import MiniSom
+import numpy as np
+import pandas as pd
 
 def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   e_ratio = 0
@@ -190,9 +192,22 @@ class Celosia:
     #assert len(Y) == len (Y_pred), "Y and Y_pred are of different dimensions"
     total = len(Y_pred)
     correct = 0
+    fp = 0 # false positives (when prediction = normal, actual = anomalous)
+    fn = 0 # false negatives (when prediction = anomalous, actual = normal)
+
+    tp = 0 # total positives (normal)
+    tn = 0 # total negatives (anomalous)
+
     for i in range(len(Y_pred)):
       correct += (1 if Y[i] == Y_pred[i] else 0)
-    return (correct * 100) / total
+      fp += (1 if ((Y[i] == 0) and (Y_pred[i] == 1)) else 0)
+      fn += (1 if ((Y[i] == 1) and (Y_pred[i] == 0)) else 0)
+      tp += (1 if Y[i] == 1 else 0)
+      tn += (1 if Y[i] == 0 else 0)
+    accuracy = (correct * 100) / total
+    fp = (fp * 100) / tn
+    fn = (fn * 100) / tp
+    return (accuracy, fp, fn)
 
   def compute_threshold_vs_accuracy(self, mid, Y, step = 0.01):
     '''Computes the threshold vs accuracy, for all thresholds between 0 and 1.
@@ -201,11 +216,45 @@ class Celosia:
                    step = the step to be taken from 0 to 1, default = 0.01'''
     th_v = [] # threshold vectors
     acc_v = [] # accuracy vector
+    fp_v = [] # false positive vector
+    fn_v = [] # false negative vector
     threshold = 0
     while threshold <= 1:
       Y_pred = self.label_data(mid, threshold)
-      accuracy = self.get_accuracy(Y, Y_pred)
+      (accuracy, fp, fn) = self.get_accuracy(Y, Y_pred)
       th_v.append(threshold)
       acc_v.append(accuracy)
+      fp_v.append(fp)
+      fn_v.append(fn)
       threshold += step
-    return (th_v, acc_v)
+    return (th_v, acc_v, fp_v, fn_v)
+
+  def retrieve_labeled_data(self, source_list):
+    '''Retrieve labeled data from different sources.
+       Parameters: source_list = a list of data source dictionary with the following
+                                 attributes:
+                        filename = the name of the file
+                        normal = 1 for normal 0 for anomalous label for this data
+                        rows = the number of rows to read, -1 means all rows in the file.'''
+    l_x = [] # list of features
+    l_y = [] # list of labels
+    for source in source_list:
+      filename = source['filename']
+      normal = bool(source['normal'])
+      rows = int(source['rows'])
+      ds = pd.read_csv(filename, index_col=0)
+      if rows > 0:
+        x = ds.iloc[:rows, :].values
+      else: # fetch all rows
+        x = ds.iloc[:, :].values
+
+      if normal: # 1 represents normal
+        y = np.ones(x.shape[0])
+      else:
+        y = np.zeros(x.shape[0])
+
+      l_x.append(x)
+      l_y.append(y)
+    X = np.concatenate(tuple(l_x), axis=0)
+    Y = np.concatenate(tuple(l_y), axis=0)
+    return (X, Y)
