@@ -39,6 +39,6 @@ if __name__ == '__main__':
     #'view': True, # view the PDF file
   }
   celosia = Celosia()
-  celosia.create_optimal_network(inputs, outputs, config)
+  celosia.create_optimal_network('8-XOR',inputs, outputs, config)
 
   # https://github.com/alexarnimueller/som/blob/master/som.py

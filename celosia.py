@@ -26,7 +26,7 @@ def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
     e_ratio = e_tst / e_tr
   if (e_ratio >= 1.0) and (e_tst <= ed):
     suitable = True
-  res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio, 'suitable': suitable}}
+  res = {nn.name:{'tl': e_tr, 'vl': e_tst, 'ratio': e_ratio, 'suitable': suitable, 'epochs': total_epochs, 's':nn.get_structure()}}
   if mp: # multiprocessing is used, put in queue
     q.put(res)
   else: # multiprocessing is NOT used, update the dictionary
@@ -85,12 +85,13 @@ class Celosia:
     p = performance
     opt_nn_name = min(p, key=lambda k: p[k]['vl'] if p[k]['suitable'] else 1000000) # optimum neural network
     opt_nn = get_nn_by_name(opt_nn_name, lnn)
-    print ("Winning NN: {}, tl: {}, vl: {}".format(opt_nn_name, p[opt_nn_name]['tl'], p[opt_nn_name]['vl']))
+    print ("Winning NN: {} : {}".format(opt_nn.name, p[opt_nn_name]))
     return opt_nn
 
-  def create_optimal_network(self, inputs, outputs, config={}):
+  def create_optimal_network(self, name, inputs, outputs, config={}):
     '''create an optimal network by trying different structures.
-       Parameters:  inputs, outputs = input and output vectors.
+       Parameters:  name = The name of the neural network
+                    inputs, outputs = input and output vectors.
                     config = the configuration parameters (dict) as follows (empty by default):
                       N = number of different structures to try, default = 10.
                       epochs = number of epochs to try for each structure, default = 10000.
@@ -106,7 +107,7 @@ class Celosia:
     epochs = config.get('epochs', 10000)
     hmax = config.get('hmax', 5)
     nmax = config.get('nmax', 5)
-    ed = config.get('ed', 0.3)
+    ed = config.get('ed', 0.09)
     imax = config.get('imax', 10)
     view = config.get('view', False)
     mp = config.get('mp', True)
@@ -128,8 +129,8 @@ class Celosia:
       h = randint(1, hmax)
       for k in range(h):
         lh.append(randint(1, nmax))
-      name = "structure-{}".format(j+1)
-      nn = self.create_network_sigmoid(name, i, o, lh)
+      ann_name = "{}-structure-{}".format(name, j+1)
+      nn = self.create_network_sigmoid(ann_name, i, o, lh)
       lnn.append(nn)
       nn.draw(inputs, outputs, file="{}".format(nn.name), view=view, cleanup=True)
     for nn in lnn:
@@ -165,7 +166,7 @@ class Celosia:
     som.train_random(data = X, num_iteration = 2000)
     dm = som.distance_map()
     mid = []
-    for i, x in enumerate(X):
+    for x in X:
       w = som.winner(x)
       (x,y) = w
       mid.append(dm[x][y])
@@ -281,7 +282,7 @@ class Celosia:
       normal = bool(source['normal'])
       rows = int(source['rows'])
       ds = pd.read_csv(filename, index_col=0)
-      if rows > 0:
+      if rows >= 0:
         x = ds.iloc[:rows, :].values
       else: # fetch all rows
         x = ds.iloc[:, :].values

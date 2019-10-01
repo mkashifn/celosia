@@ -32,6 +32,12 @@ class Sequential:
 
     self.retraining_required = False
 
+  def get_structure(self):
+    s = []
+    for l in self.layers:
+      s.append(l.count)
+    return s
+
   def weights_initializer(self, initial_weights, required_shape):
     weights = initial_weights
     if weights is None:
