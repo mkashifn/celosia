@@ -125,7 +125,7 @@ class Celosia:
 
     i = inputs.shape[1] # number of colums in the input
     o = outputs.shape[1] # number of colums in the output
-    X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=randint())
+    X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=randint(1, 125))
 
     for j in range(N):
       lh = [] # list of the number of neurons in a hidden layer
@@ -158,7 +158,7 @@ class Celosia:
     Y_tmp = opt_nn.output(inputs)
     Y_pred = []
     for y_tmp in Y_tmp:
-      y = (1 if y_tmp >= 0.15 else 0)
+      y = (1 if y_tmp >= 0.50 else 0)
       Y_pred.append(y)
     (accuracy, fp, fn) = self.get_accuracy(Y, Y_pred)
     print ('Name={}, accuracy={}, false-positive={}, false-negative={}'.format(opt_nn.name, accuracy, fp, fn))

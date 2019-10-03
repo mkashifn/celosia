@@ -79,7 +79,7 @@ devices = [('Danmini', 'Danmini_Doorbell'),
            ('SimpleHome XCS71003', 'SimpleHome_XCS7_1003_WHT_Security_Camera'),
           ]
 
-devices = [('Danmini', 'Danmini_Doorbell')]
+#devices = [('Danmini', 'Danmini_Doorbell')]
 def main():
   for device in devices:
     evaluate(device[0], device[1])
