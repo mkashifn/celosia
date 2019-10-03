@@ -147,13 +147,15 @@ class Sequential:
       for l in layers:
         l.lto = l.o
 
-    self.feed_forward(inputs)
     A = targets
+    B = self.feed_forward(inputs)
+    if debug:
+        print ("Before Training: Loss = {loss}".format(loss = self.loss(A, B)))
     for i in range(epochs):
       self.propagate_back(np.array(targets))
       B = self.feed_forward(inputs)
       if debug and (i%100) == 0:
-        print ("Epoch: {i}, Loss: {loss}".format(i=i, loss = self.loss(A, B)))
+        print ("Epoch: {i}, Loss = {loss}".format(i=i, loss = self.loss(A, B)))
     finish_training(self.layers)
     return self.loss(A, B)
 

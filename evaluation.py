@@ -8,6 +8,7 @@ import math
 import pandas as pd
 from multiprocessing import freeze_support
 from celosia import Celosia
+from sklearn.preprocessing import MinMaxScaler
 
 #19800, 200
 
@@ -45,6 +46,8 @@ def get_data(device):
   Y = np.concatenate((y1, y2), axis=0)
   X = np.array(X)
   Y = np.array(Y)
+  sc = MinMaxScaler(feature_range = (0, 1))
+  X = sc.fit_transform(X)
   return (X, Y)
 
 def evaluate(id, device):
@@ -53,8 +56,14 @@ def evaluate(id, device):
   print ("{}: {}, {}".format(device, X.shape, Y.shape))
 
   config = {
-    'N':10, # number of different network structures to try
+    #'N':10, # number of different network structures to try
     #'view': True, # view the PDF file
+    'hmax': 5,
+    'nmax': 5,
+    'N': 1,
+    'epochs': 10000,
+    'eta': 0.75,
+    'imax': 1,
   }
   celosia = Celosia()
   celosia.create_optimal_network(device,X, Y, config)
@@ -70,6 +79,7 @@ devices = [('Danmini', 'Danmini_Doorbell'),
            ('SimpleHome XCS71003', 'SimpleHome_XCS7_1003_WHT_Security_Camera'),
           ]
 
+devices = [('Danmini', 'Danmini_Doorbell')]
 def main():
   for device in devices:
     evaluate(device[0], device[1])

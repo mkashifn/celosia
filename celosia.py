@@ -21,7 +21,7 @@ def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   total_epochs = 0
   while ((e_tst > ed) or (e_ratio < 1.0)) and (total_epochs < (imax * epochs)):
     total_epochs += epochs
-    e_tr = nn.train(X_train, y_train, epochs) # training loss
+    e_tr = nn.train(X_train, y_train, epochs, debug=False) # training loss
     e_tst = mse(y_test, nn.output(X_test)) # test loss
     e_ratio = e_tst / e_tr
   if (e_ratio >= 1.0) and (e_tst <= ed):
@@ -55,12 +55,12 @@ class Celosia:
     nh = math.ceil(ns/(alpha * (ni + no)))
     return nh
 
-  def create_network_sigmoid(self, name, i, o, lh, eta=0.5):
+  def create_network_sigmoid(self, name, i, o, lh, eta):
     '''Create a neural network by making use of sigmoid activation function in all layers.
        Parameters:  name = name of the nn (any arbitrary string)
                     i,o =  number of neurons in [input|output] layers.
                     lh = list containing the number of neurons in each hidden layer.
-                    eta = learning rate, 0.5 by default.'''
+                    eta = learning rate.'''
     assert type(i) is int, "parameter i (number of input neurons) needs to be an integer"
     assert type(o) is int, "parameter o (number of output neurons) needs to be an integer"
     assert type(lh) is list, "parameter h (list of neurons in each hidden layer) needs to be a list"
@@ -99,6 +99,7 @@ class Celosia:
                       nmax = maximum number of neurons in a hidden layer, default = 5.
                       ed = desired validation loss, default = 0.3.
                       imax = maximum number of iterations, default = 10.
+                      eta = learning rate, default = 0.5.
                       view = view output (PDF), default = False.
                       mp = use mullti-processing, default = True.'''
     # Load configuration
@@ -109,6 +110,7 @@ class Celosia:
     nmax = config.get('nmax', 5)
     ed = config.get('ed', 0.09)
     imax = config.get('imax', 10)
+    eta = config.get('eta', 0.5)
     view = config.get('view', False)
     mp = config.get('mp', True)
     
@@ -123,16 +125,18 @@ class Celosia:
 
     i = inputs.shape[1] # number of colums in the input
     o = outputs.shape[1] # number of colums in the output
-    X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.25, random_state=randint())
+
     for j in range(N):
       lh = [] # list of the number of neurons in a hidden layer
       h = randint(1, hmax)
       for k in range(h):
         lh.append(randint(1, nmax))
       ann_name = "{}-structure-{}".format(name, j+1)
-      nn = self.create_network_sigmoid(ann_name, i, o, lh)
+      nn = self.create_network_sigmoid(ann_name, i, o, lh, eta)
       lnn.append(nn)
       nn.draw(inputs, outputs, file="{}".format(nn.name), view=view, cleanup=True)
+
     for nn in lnn:
       if mp:
         p = Process(target=evaluate_nn, args=(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q))
@@ -147,7 +151,7 @@ class Celosia:
         performance.update(q.get())
     opt_nn = self.get_best_performing_nn(lnn, performance)
     opt_nn.draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
-    
+
     #calculate the accuracy of the opt_nn
     X = inputs
     Y = outputs
@@ -157,7 +161,7 @@ class Celosia:
       y = (1 if y_tmp >= 0.15 else 0)
       Y_pred.append(y)
     (accuracy, fp, fn) = self.get_accuracy(Y, Y_pred)
-    print ('Name={}, accuracy={}, false-positive={}, false-negative={}, Y_tmp={}'.format(opt_nn.name, accuracy, fp, fn, Y_tmp))
+    print ('Name={}, accuracy={}, false-positive={}, false-negative={}'.format(opt_nn.name, accuracy, fp, fn))
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
 
