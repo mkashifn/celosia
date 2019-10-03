@@ -147,6 +147,17 @@ class Celosia:
         performance.update(q.get())
     opt_nn = self.get_best_performing_nn(lnn, performance)
     opt_nn.draw(inputs, outputs, file="most-optimal", view=view, cleanup=True)
+    
+    #calculate the accuracy of the opt_nn
+    X = inputs
+    Y = outputs
+    Y_tmp = opt_nn.output(inputs)
+    Y_pred = []
+    for y_tmp in Y_tmp:
+      y = (1 if y_tmp >= 0.15 else 0)
+      Y_pred.append(y)
+    (accuracy, fp, fn) = self.get_accuracy(Y, Y_pred)
+    print ('Name={}, accuracy={}, false-positive={}, false-negative={}, Y_tmp={}'.format(opt_nn.name, accuracy, fp, fn, Y_tmp))
     elapsed_time = time.time() - start_time
     print ("job completed in {} seconds.".format(elapsed_time))
 
