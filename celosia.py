@@ -21,7 +21,7 @@ def evaluate_nn(nn, epochs, X_train, X_test, y_train, y_test, ed, imax, mp, q):
   total_epochs = 0
   while ((e_tst > ed) or (e_ratio < 1.0)) and (total_epochs < (imax * epochs)):
     total_epochs += epochs
-    e_tr = nn.train(X_train, y_train, epochs, debug=False) # training loss
+    e_tr = nn.train(X_train, y_train, epochs, debug=True) # training loss
     e_tst = mse(y_test, nn.output(X_test)) # test loss
     e_ratio = e_tst / e_tr
   if (e_ratio >= 1.0) and (e_tst <= ed):

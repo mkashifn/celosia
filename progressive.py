@@ -17,7 +17,7 @@ class Layer:
     self.o = self.a.fx(np.dot(self.i, self.w) + self.b)
     return self.o
 
-class Sequential:
+class Progressive:
   def __init__(self, name, loss, eta):
     self.name = name
     self.layers = []
