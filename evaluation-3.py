@@ -1,19 +1,12 @@
 import numpy as np
-#from functions import sigmoid, softmax
-#from estimators import mse
-#from sequential import Sequential
-#from random import randint
-from utilities import get_device_data
-#import math
+from utilities import get_device_data, get_accuracy, scale_output_0_1
 import pandas as pd
-#from multiprocessing import freeze_support
-#from celosia import Celosia
 from sklearn.preprocessing import MinMaxScaler
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.metrics import confusion_matrix
-
+"""
 def get_accuracy(Y, Y_pred):
   '''Return accuracy of the prediction as a percentage.
      Parameters: Y = the expected or actual labels (1 = normal, 0 = anomalous)
@@ -44,33 +37,14 @@ def get_accuracy(Y, Y_pred):
 # Evaluate Performance of Different Techniques
 # *****************************************************************
 
-'''
-def get_error(name, inputs, outputs):
-  i = inputs.shape[1] # number of colums in the input
-  o = outputs.shape[1] # number of colums in the output
-  w = None # None means randomly initialize weights
-  nn = Sequential(name, mse, 0.5)
-  # input layer
-  nn.add_layer(4, sigmoid, 0.0, w, i)
-  # hidden layers
-  nn.add_layer(6, sigmoid, 0.0, w)
-  nn.add_layer(3, sigmoid, 0.0, w)
-  # output layer
-  nn.add_layer(o, sigmoid, 0.0, w)
-  epochs = [2000, 2000, 2000, 2000, 2000]
-  err = []
-  for ep in epochs:
-    e = nn.train(inputs, outputs, ep, debug=True)
-    err.append(e)
-  return err
-'''
+
 def scale_output_0_1(Y_real):
   Y_pred = []
   for y_real in Y_real:
     y = (1 if y_real >= 0.5 else 0)
     Y_pred.append(y)
   return Y_pred
-
+"""
 def get_error(name, inputs, outputs):
   i = inputs.shape[1] # number of columns in the input
   o = outputs.shape[1] # number of columns in the output
@@ -93,7 +67,7 @@ def get_error(name, inputs, outputs):
   classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
   # Fitting the ANN to the Training set
-  classifier.fit(inputs, outputs, batch_size = 10, epochs = 20)
+  classifier.fit(inputs, outputs, batch_size = 4000, epochs = 100)
 
   # Part 3 - Making predictions and evaluating the model
 
@@ -105,25 +79,8 @@ def get_error(name, inputs, outputs):
   print ('name={}, accuracy={}, false-positive={}, false-negative={}'.format(name, accuracy, fp, fn))
   return 10
 
-def get_data(device, count_normal, count_anomalous, anomaly_label=0):
-  dataset1 = pd.read_csv('evaluation/{}_benign_traffic.csv'.format(device))
-  dataset2 = pd.read_csv('evaluation/{}_attack_combo.csv'.format(device))
-
-  X1 = dataset1.iloc[:count_normal, :].values
-  y1 = np.ones((X1.shape[0],1))
-  X2 = dataset2.iloc[:count_anomalous, :].values
-  y2 = np.zeros((X2.shape[0],1))
-
-  X = np.concatenate((X1, X2), axis=0)
-  Y = np.concatenate((y1, y2), axis=0)
-  X = np.array(X)
-  Y = np.array(Y)
-  sc = MinMaxScaler(feature_range = (0, 1))
-  X = sc.fit_transform(X)
-  return (X, Y)
-
 def evaluate(name, device):
-  (X, Y) = get_device_data(device, 1980, 1980, anomaly_label=0)
+  (X, Y) = get_device_data(device, 2000, 2000, anomaly_label=0)
   #(X, Y) = get_data(device, 1980, 1980, anomaly_label=0)
 
   #celosia = Celosia()

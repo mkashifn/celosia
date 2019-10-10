@@ -3,6 +3,7 @@ import numpy as np
 from graphviz import Digraph
 from graphviz import Graph
 import warnings
+from utilities import get_accuracy, scale_output_0_1
 
 class Layer:
   def __init__(self, activation, bias, weights):
@@ -154,8 +155,11 @@ class Progressive:
     for i in range(epochs):
       self.propagate_back(np.array(targets))
       B = self.feed_forward(inputs)
+      Y_pred = scale_output_0_1(B)
+      Y = targets
+      (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
       if debug and (i%100) == 0:
-        print ("Epoch: {i}, Loss = {loss}".format(i=i, loss = self.loss(A, B)))
+        print ("Epoch: {i}, Loss = {loss}, Accuracy={accuracy}".format(i=i, loss = self.loss(A, B), accuracy=accuracy))
     finish_training(self.layers)
     return self.loss(A, B)
 

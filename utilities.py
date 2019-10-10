@@ -74,3 +74,40 @@ def get_device_data(device, count_normal, count_anomalous, anomaly_label=0):
   source_list = [normal, anomalous]
 
   return retrieve_labeled_data(source_list, anomaly_label)
+
+def get_accuracy(Y, Y_pred):
+  '''Return accuracy of the prediction as a percentage.
+     Parameters: Y = the expected or actual labels (1 = normal, 0 = anomalous)
+                 Y_pred = the predicted output obtained using label_data().'''
+  #assert len(Y) == len (Y_pred), "Y and Y_pred are of different dimensions"
+  total = len(Y_pred)
+  correct = 0
+  fp = 0 # false positives (when prediction = normal, actual = anomalous)
+  fn = 0 # false negatives (when prediction = anomalous, actual = normal)
+
+  tp = 0 # total positives (normal)
+  tn = 0 # total negatives (anomalous)
+
+  for i in range(len(Y_pred)):
+    correct += (1 if Y[i] == Y_pred[i] else 0)
+    fp += (1 if ((Y[i] == 0) and (Y_pred[i] == 1)) else 0)
+    fn += (1 if ((Y[i] == 1) and (Y_pred[i] == 0)) else 0)
+    tp += (1 if Y[i] == 1 else 0)
+    tn += (1 if Y[i] == 0 else 0)
+  accuracy = (correct * 100) / total
+  fp = (fp * 100) / tn
+  fn = (fn * 100) / tp
+  return (accuracy, fp, fn)
+
+#19800, 200
+
+# *****************************************************************
+# Evaluate Performance of Different Techniques
+# *****************************************************************
+
+def scale_output_0_1(Y_real):
+  Y_pred = []
+  for y_real in Y_real:
+    y = (1 if y_real >= 0.5 else 0)
+    Y_pred.append(y)
+  return Y_pred

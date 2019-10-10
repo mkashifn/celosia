@@ -35,5 +35,14 @@ class Softmax(Function):
     s = fx.reshape(-1,1)
     return np.diagflat(s) - np.dot(s, s.T)
 
+class Relu(Function):
+  # https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
+  def fx(self, x):
+    return x * (x > 0)
+
+  def dfx(self, fx):
+    return 1. * (fx > 0)
+
 sigmoid = Logistic()
 softmax = Softmax()
+relu = Relu()
