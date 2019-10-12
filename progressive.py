@@ -143,7 +143,7 @@ class Progressive:
   def output(self, input):
     return self.feed_forward(input)
 
-  def train(self, inputs, targets, epochs, debug=False):
+  def train(self, inputs, targets, epochs, batch_size, debug=False):
     def finish_training(layers):
       for l in layers:
         l.lto = l.o
@@ -152,22 +152,39 @@ class Progressive:
     B = self.feed_forward(inputs)
     if debug:
         print ("Before Training: Loss = {loss}".format(loss = self.loss(A, B)))
-    M = inputs.shape[1] # number of rows in the input
+    M = inputs.shape[0] # number of rows in the input
+    n_batches = int(np.ceil(float(M)/float(batch_size)))
+    # stochastic gradient descent, 
     inputs_r = inputs
     targets_r = targets
     for i in range(epochs):
+      print ("Epoch: {}/{}".format(i+1, epochs))
       rand_indices = np.random.permutation(M)
       inputs_r = inputs_r[rand_indices] #.reshape(inputs.shape[0], inputs.shape[1])
       targets_r = targets_r[rand_indices] #.reshape(targets.shape[0], targets.shape[1])
-      B = self.feed_forward(inputs_r)
-      self.propagate_back(np.array(targets_r))
+      for b in range(n_batches):
+        start_index = b * batch_size
+        end_index = start_index + batch_size
+        if end_index > M:
+          end_index = M
+        inputs_b = inputs_r[start_index:end_index, :]
+        targets_b = targets_r[start_index:end_index, :]
+        B = self.feed_forward(inputs_b)
+        self.propagate_back(targets_b)
 
-      B = self.feed_forward(inputs)
+        B = self.feed_forward(inputs_b)
+        Y_pred = scale_output_0_1(B)
+        Y = targets_b
+        (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
+        print ("    {e}/{m}, Loss = {loss}, Accuracy={accuracy}".format(e=end_index, m=M, loss = self.loss(inputs_b, B), accuracy=accuracy))
+
+      '''B = self.feed_forward(inputs)
       Y_pred = scale_output_0_1(B)
       Y = targets
       (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
       if debug and (i%100) >= 0:
-        print ("Epoch: {i}, Loss = {loss}, Accuracy={accuracy}".format(i=i, loss = self.loss(A, B), accuracy=accuracy))
+        print ("Epoch: {i}, Loss = {loss}, Accuracy={accuracy}".format(i=i, loss = self.loss(A, B), accuracy=accuracy))'''
+    B = self.feed_forward(inputs)
     finish_training(self.layers)
     return self.loss(A, B)
 

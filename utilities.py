@@ -76,7 +76,7 @@ def get_device_data(device, count_normal, count_anomalous, anomaly_label=0):
   return retrieve_labeled_data(source_list, anomaly_label)
 
 def get_accuracy(Y, Y_pred):
-  '''Return accuracy of the prediction as a percentage.
+  '''Return accuracy of the prediction on a scale of 0-1.
      Parameters: Y = the expected or actual labels (1 = normal, 0 = anomalous)
                  Y_pred = the predicted output obtained using label_data().'''
   #assert len(Y) == len (Y_pred), "Y and Y_pred are of different dimensions"
@@ -94,9 +94,13 @@ def get_accuracy(Y, Y_pred):
     fn += (1 if ((Y[i] == 1) and (Y_pred[i] == 0)) else 0)
     tp += (1 if Y[i] == 1 else 0)
     tn += (1 if Y[i] == 0 else 0)
-  accuracy = (correct * 100) / total
-  fp = (fp * 100) / tn
-  fn = (fn * 100) / tp
+  offset = 1e-7 # add offset to avoid divide-by-zero exception
+  total = float(total) + offset
+  tn = float(tn) + offset
+  tp = float(tp) + offset
+  accuracy = float(correct)/ total
+  fp = float(fp) / tn
+  fn = float(fn) / tp
   return (accuracy, fp, fn)
 
 #19800, 200
