@@ -153,15 +153,14 @@ class Progressive:
     if debug:
         print ("Before Training: Loss = {loss}".format(loss = self.loss(A, B)))
     M = inputs.shape[1] # number of rows in the input
+    inputs_r = inputs
+    targets_r = targets
     for i in range(epochs):
-      for m in range(M): # stochastic gradient descent
-        rand_index = np.random.randint(0,m+1)
-        if rand_index > 0:
-          rand_index -= 1
-        X_m = inputs[rand_index,:].reshape(1, inputs.shape[1])
-        T_m = targets[rand_index,:].reshape(1, targets.shape[1])
-        B = self.feed_forward(X_m)
-        self.propagate_back(np.array(T_m))
+      rand_indices = np.random.permutation(M)
+      inputs_r = inputs_r[rand_indices] #.reshape(inputs.shape[0], inputs.shape[1])
+      targets_r = targets_r[rand_indices] #.reshape(targets.shape[0], targets.shape[1])
+      B = self.feed_forward(inputs_r)
+      self.propagate_back(np.array(targets_r))
 
       B = self.feed_forward(inputs)
       Y_pred = scale_output_0_1(B)
