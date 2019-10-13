@@ -4,12 +4,14 @@ from graphviz import Digraph
 from graphviz import Graph
 import warnings
 from utilities import get_accuracy, scale_output_0_1
+import time
 
 class Layer:
   def __init__(self, activation, bias, weights):
     self.a = activation
     self.b = bias
     self.w = weights
+    self.old_vt = 0 * self.w # old vt (weight difference)
     self.count = weights.shape[1] #number of neurons
     self.sigma = None
     self.lto = None # last training outputs
@@ -38,6 +40,14 @@ class Progressive:
     for l in self.layers:
       s.append(l.count)
     return s
+
+  def get_weights(self):
+    w = {}
+    i = 1
+    for l in self.layers:
+      w.update({i:l.w})
+      i += 1
+    return w
 
   def weights_initializer(self, initial_weights, required_shape):
     weights = initial_weights
@@ -177,6 +187,9 @@ class Progressive:
         Y = targets_b
         (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
         print ("    {e}/{m}, Loss = {loss}, Accuracy={accuracy}".format(e=end_index, m=M, loss = self.loss(inputs_b, B), accuracy=accuracy))
+        
+        #print ("Weights = {}".format(self.get_weights()))
+        #time.sleep(2)
 
       '''B = self.feed_forward(inputs)
       Y_pred = scale_output_0_1(B)
@@ -188,9 +201,10 @@ class Progressive:
     finish_training(self.layers)
     return self.loss(A, B)
 
-  def update_layer_weights(self, layer, sigma, eta):
-    d_weights = np.dot(layer.i.T, sigma) * eta
-    new_weights = layer.w - d_weights
+  def update_layer_weights(self, layer, sigma, eta, momentum=0):
+    vt = (momentum * layer.old_vt) + np.dot(layer.i.T, sigma) * eta
+    layer.old_vt = vt
+    new_weights = layer.w - vt
     old_weights = layer.w
     layer.w = new_weights
     layer.sigma = sigma
@@ -199,6 +213,7 @@ class Progressive:
   def propagate_back(self, targets):
     layers = self.layers[::-1] # reverse, need to start from output layer
     layer = layers[0]
+    #print(self.loss.dfx(targets,layer.o))
     sigma = -self.loss.dfx(targets,layer.o)*layer.a.dfx(layer.o)
     old_weights = self.update_layer_weights(layer, sigma, self.eta)
     layers = layers[1:] # other layers
