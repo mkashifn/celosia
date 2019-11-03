@@ -1,9 +1,10 @@
 import numpy as np
 from functions import sigmoid, softmax, relu
-from estimators import mse
+from estimators import mse, cross_entropy
+from optimizers import adam_default, momentum_default
 from progressive import Progressive
 from random import randint
-from utilities import get_device_data
+from utilities import get_device_data, scale_output_0_1, get_accuracy
 import pandas as pd
 #from multiprocessing import freeze_support
 #from celosia import Celosia
@@ -13,7 +14,7 @@ def get_error_progressive(name, inputs, outputs):
   i = inputs.shape[1] # number of colums in the input
   o = outputs.shape[1] # number of colums in the output
   w = None # None means randomly initialize weights
-  nn = Progressive(name, mse, 0.5)
+  nn = Progressive(name, cross_entropy, 0.001, adam_default)
   # input layer
   nn.add_layer(4, relu, 0.0, w, i)
   # hidden layers
@@ -22,10 +23,10 @@ def get_error_progressive(name, inputs, outputs):
   # output layer
   nn.add_layer(o, sigmoid, 0.0, w)
   #epochs = [2000, 2000, 2000, 2000, 2000]
-  epochs = [100000]
+  epochs = [100]
   err = []
   for ep in epochs:
-    e = nn.train(inputs, outputs, ep, debug=True)
+    e = nn.train(inputs, outputs, ep, 4000, debug=True)
     err.append(e)
   y_pred = nn.output(inputs)
   Y_pred = scale_output_0_1(y_pred)

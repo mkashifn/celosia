@@ -4,7 +4,8 @@ import numpy as np
 class Function:
   def __init__(self):
     pass
-
+  def __call__(self, x):
+    return self.fx(x)
   def fx(self, x):
     return x
 
@@ -27,8 +28,8 @@ class Softmax(Function):
     pass
 
   def fx(self, x):
-    z = x - np.max(x)
-    sm = (np.exp(z).T / np.sum(np.exp(z), axis=0)).T
+    exps = np.exp(x - np.max(x))
+    sm = exps / np.sum(exps)
     return sm
 
   def dfx(self, fx):
