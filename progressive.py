@@ -5,6 +5,7 @@ from graphviz import Graph
 import warnings
 from utilities import get_accuracy, scale_output_0_1
 import time
+from optimizers import no_optimizer
 
 class Layer:
   def __init__(self, activation, bias, weights):
@@ -21,7 +22,7 @@ class Layer:
     return self.o
 
 class Progressive:
-  def __init__(self, name, loss, eta):
+  def __init__(self, name, loss, eta, optimizer=no_optimizer):
     self.name = name
     self.layers = []
     self.loss = loss
@@ -34,6 +35,7 @@ class Progressive:
     self.weight_count = 1
 
     self.retraining_required = False
+    self.optimizer = optimizer
 
   def get_structure(self):
     s = []
@@ -201,12 +203,14 @@ class Progressive:
     finish_training(self.layers)
     return self.loss(A, B)
 
-  def update_layer_weights(self, layer, sigma, eta, momentum=0):
-    vt = (momentum * layer.old_vt) + np.dot(layer.i.T, sigma) * eta
+  def update_layer_weights(self, layer, sigma, eta):
+    vt = layer.old_vt
+    theta = layer.w
+    old_weights = theta
+    gt = np.dot(layer.i.T, sigma)
+    (vt, theta) = self.optimizer(vt, theta, gt, eta)
     layer.old_vt = vt
-    new_weights = layer.w - vt
-    old_weights = layer.w
-    layer.w = new_weights
+    layer.w = theta
     layer.sigma = sigma
     return old_weights
 
