@@ -42,7 +42,7 @@ class Adam(Optimizer):
     mt_h = mt / (1 - beta1)
     vt = (beta2 * vt_1) + (1 - beta2)*(gt**2)
     vt_h = vt / (1 - beta2) # Adam
-    vt_h = max(vt_1, vt) # AMSGrad
+    vt_h = np.maximum(vt_1, vt) # AMSGrad
     theta = theta - (eta / (np.sqrt(vt_h) + eps))*mt_h
     grads['vt'] = vt
     grads['mt'] = mt

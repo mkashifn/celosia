@@ -163,7 +163,10 @@ class Progressive:
     A = targets
     B = self.feed_forward(inputs)
     if debug:
-        print ("Before Training: Loss = {loss}".format(loss = self.loss(A, B)))
+      Y_pred = scale_output_0_1(B)
+      Y = targets
+      (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
+      print ("Before Training: Loss = {loss}, Accuracy={accuracy}".format(loss = self.loss(A, B), accuracy=accuracy))
     M = inputs.shape[0] # number of rows in the input
     n_batches = int(np.ceil(float(M)/float(batch_size)))
     # stochastic gradient descent, 
