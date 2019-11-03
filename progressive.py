@@ -12,7 +12,7 @@ class Layer:
     self.a = activation
     self.b = bias
     self.w = weights
-    self.old_vt = 0 * self.w # old vt (weight difference)
+    self.old_grads = {} # old gradients
     self.count = weights.shape[1] #number of neurons
     self.sigma = None
     self.lto = None # last training outputs
@@ -204,12 +204,12 @@ class Progressive:
     return self.loss(A, B)
 
   def update_layer_weights(self, layer, sigma, eta):
-    vt = layer.old_vt
+    grads = layer.old_grads
     theta = layer.w
     old_weights = theta
     gt = np.dot(layer.i.T, sigma)
-    (vt, theta) = self.optimizer(vt, theta, gt, eta)
-    layer.old_vt = vt
+    (grads, theta) = self.optimizer(grads, theta, gt, eta)
+    layer.old_grads = grads
     layer.w = theta
     layer.sigma = sigma
     return old_weights
