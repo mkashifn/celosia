@@ -1,5 +1,5 @@
 import numpy as np
-from celosia import Celosia
+from src.celosia import Celosia
 from multiprocessing import freeze_support
 
 #*************************************************************************

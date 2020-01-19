@@ -22,7 +22,7 @@ class Layer:
     return self.o
 
 class Progressive:
-  def __init__(self, name, loss, eta, optimizer=no_optimizer):
+  def __init__(self, name, loss, eta, optimizer=None):
     self.name = name
     self.layers = []
     self.loss = loss
@@ -35,6 +35,8 @@ class Progressive:
     self.weight_count = 1
 
     self.retraining_required = False
+    if not optimizer:
+      optimizer=no_optimizer
     self.optimizer = optimizer
 
   def get_structure(self):
@@ -168,6 +170,8 @@ class Progressive:
       (accuracy, fp, fn) = get_accuracy(Y, Y_pred)
       print ("Before Training: Loss = {loss}, Accuracy={accuracy}".format(loss = self.loss(A, B), accuracy=accuracy))
     M = inputs.shape[0] # number of rows in the input
+    if not batch_size:
+      batch_size = M
     n_batches = int(np.ceil(float(M)/float(batch_size)))
     # stochastic gradient descent, 
     inputs_r = inputs

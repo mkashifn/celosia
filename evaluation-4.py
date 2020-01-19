@@ -1,8 +1,8 @@
 import numpy as np
-from functions import sigmoid, softmax, relu
-from estimators import mse, cross_entropy
-from optimizers import adam_default, momentum_default
-from progressive import Progressive
+from src.functions import sigmoid, softmax, relu
+from src.estimators import mse, cross_entropy
+from src.optimizers import adam_default, momentum_default
+from src.progressive import Progressive
 from random import randint
 from utilities import get_device_data, scale_output_0_1, get_accuracy
 import pandas as pd
@@ -14,7 +14,7 @@ def get_error_progressive(name, inputs, outputs):
   i = inputs.shape[1] # number of colums in the input
   o = outputs.shape[1] # number of colums in the output
   w = None # None means randomly initialize weights
-  nn = Progressive(name, cross_entropy, 0.001, adam_default)
+  nn = Progressive(name, mse, 1, None)
   # input layer
   nn.add_layer(4, relu, 0.0, w, i)
   # hidden layers

@@ -1,5 +1,5 @@
 import numpy as np
-from celosia import Celosia
+from src.celosia import Celosia
 from multiprocessing import freeze_support
 import pandas as pd
 import os
@@ -24,7 +24,7 @@ def main(filename):
   ds['SOM-mid'] = mid
   ds['Y_pred_0.02'] = Y_pred
   ds.to_csv(output_filename)
-  (th_v, acc_v) = celosia.compute_threshold_vs_accuracy(mid, Y)
+  (th_v, acc_v, fp_v, fn_v) = celosia.compute_threshold_vs_accuracy(mid, Y)
   print th_v
   print acc_v
 

@@ -1,13 +1,13 @@
 import numpy as np
-from functions import sigmoid
-from estimators import mse
-from sequential import Sequential
+from src.functions import sigmoid
+from src.estimators import mse
+from src.progressive import Progressive
 from random import randint
-from utilities import save_object, load_object, get_data
+from utilities import save_object, load_object, get_device_data
 import math
 import pandas as pd
 from multiprocessing import freeze_support
-from celosia import Celosia
+from src.celosia import Celosia
 
 #19800, 200
 
@@ -16,7 +16,7 @@ from celosia import Celosia
 # *****************************************************************
 
 def evaluate(id, device):
-  (X, Y) = get_data(device, 19800, 200)
+  (X, Y) = get_device_data(device, 19800, 200)
 
   print ("{}: {}, {}".format(device, X.shape, Y.shape))
 
